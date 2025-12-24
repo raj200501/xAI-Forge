@@ -1,0 +1,6 @@
+<svg width="320" height="120" viewBox="0 0 320 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="120" rx="16" fill="#0B0F19"/>
+  <path d="M40 80L80 40H120L80 80H40Z" fill="#4ADE80"/>
+  <path d="M80 80L120 40H160L120 80H80Z" fill="#38BDF8"/>
+  <text x="180" y="70" fill="#E5E7EB" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">xAI-Forge</text>
+</svg>

@@ -1,0 +1,19 @@
+site_name: xAI-Forge
+site_description: Deterministic agent runtime + trace viewer
+repo_url: https://github.com/raj200501/xAI-Forge
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - content.code.copy
+nav:
+  - Overview: index.md
+  - Features: FEATURES.md
+  - SDK: SDK.md
+  - Design: DESIGN.md
+  - Event Spec: EVENT_SPEC.md
+  - Providers: PROVIDERS.md
+  - Tools: TOOLS.md
+  - Security: SECURITY.md
+  - Roadmap: ROADMAP.md

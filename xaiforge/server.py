@@ -31,6 +31,7 @@ class RunRequest(BaseModel):
     root: str = "."
     provider: str = "heuristic"
     allow_net: bool = False
+    plugins: list[str] = []
 
 
 @app.get("/api/traces")
@@ -96,6 +97,7 @@ async def api_run(request: RunRequest) -> EventSourceResponse:
                 root=Path(request.root),
                 allow_net=request.allow_net,
                 on_event=on_event,
+                plugins=request.plugins,
             )
 
         task = asyncio.create_task(runner())
