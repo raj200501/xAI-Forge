@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
 from xaiforge.events import Event, RollingHasher
 
@@ -86,8 +87,51 @@ def list_manifests(base_dir: Path) -> List[dict]:
     manifests = []
     for manifest_path in trace_dir.glob("*.manifest.json"):
         try:
-            manifests.append(json.loads(manifest_path.read_text(encoding="utf-8")))
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
+        trace_id = manifest.get("trace_id")
+        trace_path = trace_dir / f"{trace_id}.jsonl"
+        tool_calls, error_count = _summarize_trace(trace_path)
+        manifest["tool_call_count"] = tool_calls
+        manifest["error_count"] = error_count
+        manifest["duration_s"] = _duration_seconds(
+            manifest.get("started_at"), manifest.get("ended_at")
+        )
+        manifests.append(manifest)
     manifests.sort(key=lambda item: item.get("started_at", ""), reverse=True)
     return manifests
+
+
+def _duration_seconds(started_at: str | None, ended_at: str | None) -> float | None:
+    if not started_at or not ended_at:
+        return None
+    try:
+        started = datetime.fromisoformat(started_at)
+        ended = datetime.fromisoformat(ended_at)
+    except ValueError:
+        return None
+    duration = (ended - started).total_seconds()
+    return max(duration, 0.0)
+
+
+def _summarize_trace(trace_path: Path) -> Tuple[int, int]:
+    if not trace_path.exists():
+        return 0, 0
+    tool_calls = 0
+    error_count = 0
+    with trace_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            event_type = payload.get("type")
+            if event_type == "tool_call":
+                tool_calls += 1
+            if event_type == "tool_error":
+                error_count += 1
+    return tool_calls, error_count

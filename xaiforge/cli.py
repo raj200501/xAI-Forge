@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sys
+import time
+import webbrowser
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -13,7 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from xaiforge.agent.runner import replay_trace, run_task
-from xaiforge.trace_store import TraceReader, list_manifests
+from xaiforge.trace_store import TraceManifest, TraceReader, list_manifests
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -143,6 +143,31 @@ def doctor() -> None:
 
 
 @app.command()
+def ui(
+    open_browser: bool = typer.Option(True, "--open/--no-open"),
+    url: str = typer.Option("http://127.0.0.1:5173", "--url"),
+) -> None:
+    """Open the web UI in a browser and print local dev instructions."""
+    console.rule("xAI-Forge UI")
+    console.print(
+        Panel(
+            "Start the API and UI in separate terminals:\n\n"
+            "[bold]Terminal 1[/bold]\n"
+            "python -m xaiforge serve\n\n"
+            "[bold]Terminal 2[/bold]\n"
+            "cd web && npm install && npm run dev\n\n"
+            f"Then open [bold]{url}[/bold]",
+            title="UI Quickstart",
+        )
+    )
+    if open_browser:
+        try:
+            webbrowser.open(url, new=2)
+        except Exception as exc:
+            console.print(f"[yellow]Unable to open browser:[/yellow] {exc}")
+
+
+@app.command()
 def bench() -> None:
     """Run a benchmark suite of curated tasks."""
     tasks = [
@@ -162,17 +187,62 @@ def bench() -> None:
 
     async def _run() -> None:
         for task in tasks:
+            started = time.perf_counter()
             manifest = await run_task(task, "heuristic", Path("."), False)
-            results.append(manifest)
+            duration = time.perf_counter() - started
+            tool_calls = _count_tool_calls(manifest.trace_id)
+            results.append((manifest, duration, tool_calls))
 
     asyncio.run(_run())
     table = Table(title="Benchmark")
     table.add_column("Trace")
     table.add_column("Task")
     table.add_column("Events")
-    for manifest in results:
-        table.add_row(manifest.trace_id, manifest.task, str(manifest.event_count))
+    table.add_column("Duration (s)")
+    table.add_column("Tool calls")
+    for manifest, duration, tool_calls in results:
+        table.add_row(
+            manifest.trace_id,
+            manifest.task,
+            str(manifest.event_count),
+            f"{duration:.2f}",
+            str(tool_calls),
+        )
     console.print(table)
+    _write_benchmark_summary(results)
+
+
+def _count_tool_calls(trace_id: str) -> int:
+    reader = TraceReader(Path(".xaiforge"), trace_id)
+    count = 0
+    for line in reader.iter_events():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if payload.get("type") == "tool_call":
+            count += 1
+    return count
+
+
+def _write_benchmark_summary(results: list[tuple[TraceManifest, float, int]]) -> None:
+    bench_dir = Path(".xaiforge") / "bench"
+    bench_dir.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "# Benchmark Summary\n",
+        "\n",
+        "| Trace | Task | Events | Duration (s) | Tool Calls |\n",
+        "| --- | --- | --- | --- | --- |\n",
+    ]
+    for manifest, duration, tool_calls in results:
+        lines.append(
+            f"| {manifest.trace_id} | {manifest.task} | {manifest.event_count} |"
+            f" {duration:.2f} | {tool_calls} |\n"
+        )
+    (bench_dir / "latest.md").write_text("".join(lines), encoding="utf-8")
 
 
 if __name__ == "__main__":

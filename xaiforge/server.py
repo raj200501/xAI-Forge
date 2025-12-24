@@ -10,7 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from xaiforge.agent.runner import replay_trace, stream_run
+from xaiforge.agent.runner import PROVIDERS, replay_trace, stream_run
+from xaiforge.events import event_schema
+from xaiforge.tools.registry import build_registry
 from xaiforge.trace_store import TraceReader, list_manifests
 
 
@@ -34,6 +36,29 @@ class RunRequest(BaseModel):
 @app.get("/api/traces")
 async def api_traces() -> list[dict]:
     return list_manifests(Path(".xaiforge"))
+
+
+@app.get("/api/tools")
+async def api_tools() -> list[dict]:
+    registry = build_registry()
+    return [
+        {
+            "name": spec.name,
+            "description": spec.description,
+            "parameters": spec.parameters,
+        }
+        for spec in registry.specs()
+    ]
+
+
+@app.get("/api/providers")
+async def api_providers() -> list[str]:
+    return list(PROVIDERS.keys())
+
+
+@app.get("/api/schema/events")
+async def api_event_schema() -> dict:
+    return event_schema()
 
 
 @app.get("/api/traces/{trace_id}")
