@@ -1,28 +1,33 @@
 # xAI-Forge
 
-Deterministic agent runtime + trace viewer with a Grok-coded vibe. Runs locally, no paid APIs required.
+![CI](https://github.com/your-org/xAI-Forge/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)
 
-## Quickstart (60 seconds)
+Deterministic agent runtime + Flight Recorder UI with a Grok-coded vibe. Runs locally,
+ships with an offline-friendly toolbelt, and keeps everything traceable.
+
+## Why this is sick
+
+- **Flight Recorder UI** with timeline, spans tree, tool table, and metrics.
+- **Live run streaming** from the browser (SSE-based, offline-first).
+- **Replay + integrity checks** via rolling SHA-256 hashes.
+- **Compare view** for side-by-side telemetry diffs.
+- **Zero paid services** required by default.
+- **Tool registry + schemas** exposed over API for UI introspection.
+- **Deterministic traces** stored as JSONL for auditability.
+- **Command palette** for power users (`/` to open).
+
+## 1-minute demo
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
+
 python -m xaiforge run --task "Solve 23*47 and show your steps"
-```
-
-## Demo commands
-
-```bash
-python -m xaiforge run --task "Search this repo for 'TODO' and summarize files" --root .
 python -m xaiforge serve
-python -m xaiforge replay <trace_id>
-python -m xaiforge traces
-python -m xaiforge doctor
-python -m xaiforge bench
 ```
-
-### Frontend
 
 ```bash
 cd web
@@ -34,53 +39,59 @@ Open:
 - API: http://localhost:8000
 - UI: http://localhost:5173
 
+In the UI you can start new runs, replay traces, and compare two traces.
+
 ## Screenshots
 
-![trace list placeholder](docs/screenshots/traces.png)
-![trace timeline placeholder](docs/screenshots/timeline.png)
+![trace list](docs/screenshots/traces.png)
+![trace timeline](docs/screenshots/timeline.png)
+![live run](docs/screenshots/live-run.svg)
+![compare view](docs/screenshots/compare.svg)
+![metrics panel](docs/screenshots/metrics.svg)
 
 ## Architecture
 
-```
-+-----------------+       SSE       +----------------------+
-| xaiforge CLI    | <-------------- | FastAPI /api/run     |
-| (Typer + Rich)  |                 | /api/replay          |
-+-----------------+                 +----------------------+
-        |                                  |
-        | JSONL traces                      | JSONL + manifest
-        v                                  v
-   .xaiforge/traces/               Vite React UI (5173)
+```mermaid
+graph TD
+  CLI[xaiforge CLI] -->|JSONL events| Store[.xaiforge/traces]
+  UI[Flight Recorder UI] -->|SSE /api/run| API[FastAPI]
+  UI -->|/api/traces| API
+  API -->|manifest + reports| Store
+  API -->|replay| Replay[Replay engine]
 ```
 
-## Security model
+## Design philosophy
 
-- File tools (`file_read`, `repo_grep`) are restricted to `--root`.
-- Network access is disabled by default; `--allow-net` enables `http_get`.
-- Trace data is stored locally under `.xaiforge/traces/`.
+- **Determinism**: identical inputs yield identical traces.
+- **Verification**: replays recompute hashes for integrity.
+- **Offline-first**: tools and providers default to local execution.
 
-## Determinism & replay
+## Command Reference
 
-- Each event is written as JSONL.
-- A rolling SHA256 hash is computed (excluding the final `run_end` event).
-- `manifest.json` stores the hash; `xaiforge replay` recomputes and verifies integrity.
+```bash
+python -m xaiforge run --task "Search this repo for 'TODO'" --root .
+python -m xaiforge serve
+python -m xaiforge replay <trace_id>
+python -m xaiforge traces
+python -m xaiforge doctor
+python -m xaiforge bench
+python -m xaiforge ui
+```
 
-## Providers
+## Documentation
 
-- **HeuristicProvider** (default): deterministic planner -> tool -> verifier -> answer.
-- **OllamaProvider** (optional): uses local Ollama if available at `localhost:11434`.
-- **OpenAICompatibleProvider** (optional): set `XAIFORGE_OPENAI_BASE_URL`, `XAIFORGE_OPENAI_API_KEY`.
+- [Runtime design](docs/DESIGN.md)
+- [Event spec](docs/EVENT_SPEC.md)
+- [Security model](docs/SECURITY.md)
+- [Providers](docs/PROVIDERS.md)
+- [Tools](docs/TOOLS.md)
+- [Roadmap](docs/ROADMAP.md)
 
 ## Troubleshooting
 
 - Ensure Python 3.11+ and Node 18+ are installed.
 - `python -m xaiforge doctor` checks basics.
 - If ports 8000/5173 are busy, pass `--port` or update Vite config.
-
-## CI
-
-GitHub Actions runs:
-- `pytest`
-- `npm test` and `npm run build` in `web/`
 
 ## License
 

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Literal, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 
 EventType = Literal[
     "run_start",
@@ -83,6 +83,11 @@ class RunEnd(EventBase):
 
 
 Event = RunStart | Plan | Message | ToolCall | ToolResult | ToolError | RunEnd
+
+
+def event_schema() -> Dict[str, Any]:
+    adapter = TypeAdapter(Event)
+    return adapter.json_schema()
 
 
 class RollingHasher:
