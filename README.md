@@ -41,13 +41,6 @@ Open:
 
 In the UI you can start new runs, replay traces, and compare two traces.
 
-## Screenshots
-
-![trace list](docs/screenshots/traces.png)
-![trace timeline](docs/screenshots/timeline.png)
-![live run](docs/screenshots/live-run.svg)
-![compare view](docs/screenshots/compare.svg)
-![metrics panel](docs/screenshots/metrics.svg)
 
 ## Architecture
 
