@@ -13,13 +13,6 @@ that keeps everything auditable.
 
 ![xAI-Forge header](assets/brand-header.svg)
 
-## Screenshots
-
-![Trace list](docs/screenshots/traces.svg)
-![Timeline view](docs/screenshots/timeline.svg)
-![Live run streaming](docs/screenshots/live-run.svg)
-![Compare view](docs/screenshots/compare.svg)
-![CLI run](docs/screenshots/cli-run.svg)
 
 ## Install
 
