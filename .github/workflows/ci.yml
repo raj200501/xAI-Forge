@@ -24,7 +24,7 @@ jobs:
       - name: Frontend install
         run: |
           cd web
-          npm install
+          npm ci
       - name: Frontend test
         run: |
           cd web
