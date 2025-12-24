@@ -9,7 +9,9 @@ from xaiforge.providers.base import Provider
 from xaiforge.providers.heuristic import HeuristicProvider
 from xaiforge.providers.ollama import OllamaProvider
 from xaiforge.providers.openai_compat import OpenAICompatibleProvider
-from xaiforge.tools.registry import ToolContext, ToolRegistry, build_registry
+from xaiforge.plugins.base import PluginContext
+from xaiforge.plugins.registry import load_plugins
+from xaiforge.tools.registry import ToolContext, build_registry
 from xaiforge.trace_store import TraceManifest, TraceStore
 
 
@@ -39,6 +41,7 @@ async def run_task(
     provider_name: str,
     root: Path,
     allow_net: bool,
+    plugins: list[str] | None = None,
 ) -> TraceManifest:
     trace_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
     base_dir = Path(".xaiforge")
@@ -47,39 +50,62 @@ async def run_task(
     context = ToolContext(root=root, allow_net=allow_net, trace_id=trace_id)
     emitter = EventEmitter(store)
     started_at = datetime.now(timezone.utc).isoformat()
-    await emitter.emit(
-        RunStart(
-            trace_id=trace_id,
-            task=task,
-            provider=provider_name,
-            root_dir=str(root),
-        )
+    plugin_instances = load_plugins(plugins or [])
+    plugin_context = PluginContext(
+        trace_id=trace_id,
+        base_dir=base_dir,
+        task=task,
+        provider=provider_name,
+        root=root,
+        started_at=started_at,
     )
+
+    def _apply_event_plugins(event):
+        for plugin in plugin_instances:
+            event = plugin.on_event(plugin_context, event)
+        return event
+
+    run_start = RunStart(
+        trace_id=trace_id,
+        task=task,
+        provider=provider_name,
+        root_dir=str(root),
+    )
+    for plugin in plugin_instances:
+        run_start = plugin.on_run_start(plugin_context, run_start)
+    run_start = _apply_event_plugins(run_start)
+    await emitter.emit(run_start)
     provider = get_provider(provider_name)
     try:
-        final_answer = await provider.run(task, tools, context, emitter.emit)
+        async def emit(event) -> None:
+            event = _apply_event_plugins(event)
+            await emitter.emit(event)
+
+        final_answer = await provider.run(task, tools, context, emit)
         status = "ok"
     except Exception as exc:
         final_answer = f"Run failed: {exc}"
         status = "error"
-        await emitter.emit(
-            Message(
-                trace_id=trace_id,
-                role="assistant",
-                content=final_answer,
-            )
+        message = Message(
+            trace_id=trace_id,
+            role="assistant",
+            content=final_answer,
         )
+        message = _apply_event_plugins(message)
+        await emitter.emit(message)
     ended_at = datetime.now(timezone.utc).isoformat()
     final_hash = store.hasher.hexdigest
-    await emitter.emit(
-        RunEnd(
-            trace_id=trace_id,
-            status=status,
-            summary=final_answer,
-            final_hash=final_hash,
-            event_count=store.event_count + 1,
-        )
+    run_end = RunEnd(
+        trace_id=trace_id,
+        status=status,
+        summary=final_answer,
+        final_hash=final_hash,
+        event_count=store.event_count + 1,
     )
+    for plugin in plugin_instances:
+        run_end = plugin.on_run_end(plugin_context, run_end)
+    run_end = _apply_event_plugins(run_end)
+    await emitter.emit(run_end)
     store.close()
     manifest = TraceManifest(
         trace_id=trace_id,
@@ -111,6 +137,7 @@ async def stream_run(
     root: Path,
     allow_net: bool,
     on_event: Callable[[str], None],
+    plugins: list[str] | None = None,
 ) -> TraceManifest:
     trace_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
     base_dir = Path(".xaiforge")
@@ -119,19 +146,31 @@ async def stream_run(
     context = ToolContext(root=root, allow_net=allow_net, trace_id=trace_id)
     emitter = EventEmitter(store)
     started_at = datetime.now(timezone.utc).isoformat()
+    plugin_instances = load_plugins(plugins or [])
+    plugin_context = PluginContext(
+        trace_id=trace_id,
+        base_dir=base_dir,
+        task=task,
+        provider=provider_name,
+        root=root,
+        started_at=started_at,
+    )
 
     async def emit_and_forward(event) -> None:
+        for plugin in plugin_instances:
+            event = plugin.on_event(plugin_context, event)
         emitter.store.write_event(event)
         on_event(event.to_json())
 
-    await emit_and_forward(
-        RunStart(
-            trace_id=trace_id,
-            task=task,
-            provider=provider_name,
-            root_dir=str(root),
-        )
+    run_start = RunStart(
+        trace_id=trace_id,
+        task=task,
+        provider=provider_name,
+        root_dir=str(root),
     )
+    for plugin in plugin_instances:
+        run_start = plugin.on_run_start(plugin_context, run_start)
+    await emit_and_forward(run_start)
     provider = get_provider(provider_name)
     try:
         final_answer = await provider.run(task, tools, context, emit_and_forward)
@@ -148,15 +187,16 @@ async def stream_run(
         )
     ended_at = datetime.now(timezone.utc).isoformat()
     final_hash = store.hasher.hexdigest
-    await emit_and_forward(
-        RunEnd(
-            trace_id=trace_id,
-            status=status,
-            summary=final_answer,
-            final_hash=final_hash,
-            event_count=store.event_count + 1,
-        )
+    run_end = RunEnd(
+        trace_id=trace_id,
+        status=status,
+        summary=final_answer,
+        final_hash=final_hash,
+        event_count=store.event_count + 1,
     )
+    for plugin in plugin_instances:
+        run_end = plugin.on_run_end(plugin_context, run_end)
+    await emit_and_forward(run_end)
     store.close()
     manifest = TraceManifest(
         trace_id=trace_id,

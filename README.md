@@ -1,35 +1,66 @@
 # xAI-Forge
 
-![CI](https://github.com/your-org/xAI-Forge/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/raj200501/xAI-Forge/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)
 
-Deterministic agent runtime + Flight Recorder UI with a Grok vibe. Runs locally,
-ships with an offline-friendly toolbelt, and keeps everything traceable.
+**xAI-Forge** is a deterministic agent runtime, trace store, and UI for building reproducible AI
+runs. It ships with a typed Python SDK, plugin hooks, trace exporters, and a local-first workflow
+that keeps everything auditable.
 
-## Why this is sick
+> Why xAI-Forge exists: teams need a way to capture, replay, and explain agent behavior without
+> relying on paid services. xAI-Forge makes trace integrity a first-class feature.
 
-- **Flight Recorder UI** with timeline, spans tree, tool table, and metrics.
-- **Live run streaming** from the browser (SSE-based, offline-first).
-- **Replay + integrity checks** via rolling SHA-256 hashes.
-- **Compare view** for side-by-side telemetry diffs.
-- **Zero paid services** required by default.
-- **Tool registry + schemas** exposed over API for UI introspection.
-- **Deterministic traces** stored as JSONL for auditability.
-- **Command palette** for power users (`/` to open).
+![xAI-Forge header](assets/brand-header.svg)
 
-## 1-minute demo
+## Screenshots
+
+![Trace list](docs/screenshots/traces.svg)
+![Timeline view](docs/screenshots/timeline.svg)
+![Live run streaming](docs/screenshots/live-run.svg)
+![Compare view](docs/screenshots/compare.svg)
+![CLI run](docs/screenshots/cli-run.svg)
+
+## Install
+
+### Runtime (CLI + API)
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
-
-python -m xaiforge run --task "Solve 23*47 and show your steps"
-python -m xaiforge serve
 ```
 
+### Python SDK
+
 ```bash
+pip install -e ".[sdk]"
+```
+
+## Quickstarts
+
+### CLI
+
+```bash
+python -m xaiforge run --task "Solve 23*47 and show your steps"
+python -m xaiforge export latest --format markdown
+python -m xaiforge query "type=tool_call AND tool~search"
+```
+
+### Python SDK
+
+```python
+from xaiforge_sdk import Client
+
+client = Client("http://127.0.0.1:8000")
+for event in client.start_run("Summarize the repo"):
+    print(event.type, event.ts)
+```
+
+### UI
+
+```bash
+python -m xaiforge serve
 cd web
 npm install
 npm run dev
@@ -39,52 +70,42 @@ Open:
 - API: http://localhost:8000
 - UI: http://localhost:5173
 
-In the UI you can start new runs, replay traces, and compare two traces.
-
-
 ## Architecture
 
 ```mermaid
 graph TD
-  CLI[xaiforge CLI] -->|JSONL events| Store[.xaiforge/traces]
-  UI[Flight Recorder UI] -->|SSE /api/run| API[FastAPI]
-  UI -->|/api/traces| API
-  API -->|manifest + reports| Store
-  API -->|replay| Replay[Replay engine]
+  CLI[CLI + SDK] --> API[FastAPI server]
+  API --> Runner[Agent runner]
+  Runner --> TraceStore[.xaiforge/traces]
+  TraceStore --> UI[Web UI]
+  TraceStore --> Exporters[Exporters]
+  TraceStore --> Plugins[Plugins]
 ```
 
-## Design philosophy
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full data flow.
 
-- **Determinism**: identical inputs yield identical traces.
-- **Verification**: replays recompute hashes for integrity.
-- **Offline-first**: tools and providers default to local execution.
+## Security model
 
-## Command Reference
+xAI-Forge keeps all traces on disk by default, supports redaction plugins, and is offline-first.
+Read more in [docs/SECURITY.md](docs/SECURITY.md).
 
-```bash
-python -m xaiforge run --task "Search this repo for 'TODO'" --root .
-python -m xaiforge serve
-python -m xaiforge replay <trace_id>
-python -m xaiforge traces
-python -m xaiforge doctor
-python -m xaiforge bench
-python -m xaiforge ui
-```
+## Reproducibility
+
+- Deterministic traces are hashed (rolling SHA-256).
+- `python -m xaiforge replay <trace_id>` replays and verifies integrity.
+- `scripts/gen_sample_traces.py` seeds example traces.
+- `web/scripts/capture_screenshots.ts` regenerates UI screenshots using Playwright.
 
 ## Documentation
 
+- [Features](docs/FEATURES.md)
+- [SDK](docs/SDK.md)
 - [Runtime design](docs/DESIGN.md)
 - [Event spec](docs/EVENT_SPEC.md)
 - [Security model](docs/SECURITY.md)
 - [Providers](docs/PROVIDERS.md)
 - [Tools](docs/TOOLS.md)
 - [Roadmap](docs/ROADMAP.md)
-
-## Troubleshooting
-
-- Ensure Python 3.11+ and Node 18+ are installed.
-- `python -m xaiforge doctor` checks basics.
-- If ports 8000/5173 are busy, pass `--port` or update Vite config.
 
 ## License
 

@@ -13,6 +13,9 @@ from rich.panel import Panel
 from rich.table import Table
 
 from xaiforge.agent.runner import replay_trace, run_task
+from xaiforge.exporters import export_latest, export_trace
+from xaiforge.plugins.registry import available_plugins
+from xaiforge.query import query_traces
 from xaiforge.trace_store import TraceManifest, TraceReader, list_manifests
 
 app = typer.Typer(add_completion=False)
@@ -25,6 +28,7 @@ def run(
     root: Path = typer.Option(Path("."), "--root"),
     provider: str = typer.Option("heuristic", "--provider"),
     allow_net: bool = typer.Option(False, "--allow-net"),
+    plugins: str = typer.Option("", "--plugins", help="Comma-separated plugin list"),
 ) -> None:
     """Run a task and stream events to the console."""
     console.rule("xAI-Forge run")
@@ -45,6 +49,7 @@ def run(
                 provider_name=provider,
                 root=root,
                 allow_net=allow_net,
+                plugins=_parse_plugins(plugins),
                 on_event=on_event,
             )
         )
@@ -124,6 +129,33 @@ def traces() -> None:
 
 
 @app.command()
+def export(
+    trace_id: str = typer.Argument(..., help="Trace ID or 'latest'"),
+    format: str = typer.Option("markdown", "--format", "-f"),
+    output: Path | None = typer.Option(None, "--output", "-o"),
+) -> None:
+    """Export a trace in markdown, html, or json format."""
+    export_format = format.lower()
+    if trace_id == "latest":
+        path = export_latest(export_format)
+    else:
+        path = export_trace(trace_id, export_format, output)
+    console.print(Panel(f"Exported to {path}", title="xAI-Forge export"))
+
+
+@app.command()
+def query(expr: str = typer.Argument(..., help="Query expression")) -> None:
+    """Search events across traces with a minimal DSL."""
+    results = query_traces(Path(".xaiforge"), expr)
+    table = Table(title=f"Query: {expr}")
+    table.add_column("Trace ID")
+    table.add_column("Matches")
+    for trace_id, count in sorted(results.items(), key=lambda item: item[1], reverse=True):
+        table.add_row(trace_id, str(count))
+    console.print(table)
+
+
+@app.command()
 def doctor() -> None:
     """Check environment health."""
     table = Table(title="Doctor")
@@ -188,7 +220,7 @@ def bench() -> None:
     async def _run() -> None:
         for task in tasks:
             started = time.perf_counter()
-            manifest = await run_task(task, "heuristic", Path("."), False)
+            manifest = await run_task(task, "heuristic", Path("."), False, [])
             duration = time.perf_counter() - started
             tool_calls = _count_tool_calls(manifest.trace_id)
             results.append((manifest, duration, tool_calls))
@@ -243,6 +275,18 @@ def _write_benchmark_summary(results: list[tuple[TraceManifest, float, int]]) ->
             f" {duration:.2f} | {tool_calls} |\n"
         )
     (bench_dir / "latest.md").write_text("".join(lines), encoding="utf-8")
+
+
+def _parse_plugins(value: str) -> list[str]:
+    if not value.strip():
+        return []
+    plugins = [item.strip() for item in value.split(",") if item.strip()]
+    unknown = [name for name in plugins if name not in available_plugins()]
+    if unknown:
+        raise typer.BadParameter(
+            f"Unknown plugins: {', '.join(unknown)}. Available: {', '.join(available_plugins())}"
+        )
+    return plugins
 
 
 if __name__ == "__main__":

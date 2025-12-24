@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./.xaiforge:/app/.xaiforge
+  ui:
+    image: node:18-alpine
+    working_dir: /app/web
+    command: sh -c "npm ci && npm run build && npm run preview -- --host 0.0.0.0 --port 4173"
+    ports:
+      - "4173:4173"
+    volumes:
+      - ./web:/app/web
+    depends_on:
+      - api
