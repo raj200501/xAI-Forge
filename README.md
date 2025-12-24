@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)
 
-Deterministic agent runtime + Flight Recorder UI with a Grok-coded vibe. Runs locally,
+Deterministic agent runtime + Flight Recorder UI with a Grok vibe. Runs locally,
 ships with an offline-friendly toolbelt, and keeps everything traceable.
 
 ## Why this is sick
