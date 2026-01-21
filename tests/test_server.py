@@ -1,5 +1,4 @@
-from fastapi.testclient import TestClient
-
+from xaiforge.compat.fastapi import TestClient
 from xaiforge.server import app
 
 

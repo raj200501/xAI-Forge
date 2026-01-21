@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any
 
-import httpx
-
+from xaiforge.compat import httpx
 from xaiforge.events import Message, ToolCall, ToolError, ToolResult
 from xaiforge.providers.base import Provider
 from xaiforge.tools.registry import ToolContext, ToolRegistry
@@ -61,7 +60,8 @@ class OllamaProvider(Provider):
         ]
         return (
             "You are an agent. Respond with JSON lines of actions.\n"
-            "Each line is either a tool_call {type, tool_name, arguments} or a message {type, content}.\n"
+            "Each line is either a tool_call {type, tool_name, arguments} or a message "
+            "{type, content}.\n"
             f"Tools: {json.dumps(tool_desc)}\n"
             f"Task: {task}\n"
         )
@@ -81,7 +81,7 @@ class OllamaProvider(Provider):
                 continue
             if payload.get("type") == "tool_call":
                 tool_name = payload.get("tool_name")
-                arguments: Dict[str, Any] = payload.get("arguments", {})
+                arguments: dict[str, Any] = payload.get("arguments", {})
                 tool_call = ToolCall(
                     trace_id=context.trace_id,
                     tool_name=tool_name,

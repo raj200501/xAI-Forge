@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-import httpx
-from pydantic import TypeAdapter
-
+from xaiforge.compat import httpx
+from xaiforge.compat.pydantic import TypeAdapter
 from xaiforge_sdk.models import Event, RunRequest, TraceManifest
 from xaiforge_sdk.sse import stream_sse
 
@@ -49,7 +48,9 @@ class Client:
             allow_net=allow_net,
             plugins=plugins or [],
         )
-        for payload in stream_sse(self._client, "POST", f"{self.base_url}/api/run", request.model_dump()):
+        for payload in stream_sse(
+            self._client, "POST", f"{self.base_url}/api/run", request.model_dump()
+        ):
             yield self._event_adapter.validate_python(payload)
 
     def replay(self, trace_id: str) -> Iterator[Event]:

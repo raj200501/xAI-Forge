@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 from xaiforge.trace_store import TraceReader, list_manifests
 
@@ -66,9 +66,8 @@ def _matches(event: dict, manifest: dict, conditions: Iterable[Condition]) -> bo
         if condition.operator == "=":
             if str(value) != condition.value:
                 return False
-        elif condition.operator == "~":
-            if condition.value.lower() not in str(value).lower():
-                return False
+        elif condition.operator == "~" and condition.value.lower() not in str(value).lower():
+            return False
     return True
 
 

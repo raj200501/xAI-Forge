@@ -12,3 +12,24 @@ lint:
 test:
 	pytest
 	cd web && npm test && npm run build
+
+.PHONY: setup fmt verify run demo doctor
+
+setup:
+	python -m pip install -e ".[dev]"
+	cd web && npm install
+
+fmt:
+	ruff format .
+
+verify:
+	./scripts/verify.sh
+
+run:
+	python -m xaiforge serve
+
+demo:
+	./scripts/demo.sh
+
+doctor:
+	./scripts/doctor.sh

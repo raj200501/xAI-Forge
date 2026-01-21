@@ -5,7 +5,7 @@ from pathlib import Path
 
 from xaiforge.events import RunEnd, RunStart
 from xaiforge.exporters import export_trace
-from xaiforge.trace_store import TraceStore, TraceManifest
+from xaiforge.trace_store import TraceManifest, TraceStore
 
 
 def test_export_trace_markdown(tmp_path: Path) -> None:

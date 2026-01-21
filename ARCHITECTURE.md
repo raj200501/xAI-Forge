@@ -33,3 +33,12 @@ graph TD
 - **Exporters**: `xaiforge/exporters.py`
 - **Query DSL**: `xaiforge/query.py`
 - **SDK**: `xaiforge_sdk/*`
+
+## Observability and policy
+
+- **Observability**: `xaiforge/observability/*` provides structured logging, in-process
+  metrics, and optional OpenTelemetry scaffolding (disabled by default).
+- **Policy engine**: `xaiforge/policy/*` evaluates tool calls against allow/deny rules
+  and writes policy reports to `.xaiforge/policy/` when enabled.
+- **Bench reports**: `xaiforge/benchmarks/report.py` writes a quick run summary to
+  `.xaiforge/bench/latest.md`.

@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator, Dict
-
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from sse_starlette.sse import EventSourceResponse
 
 from xaiforge.agent.runner import PROVIDERS, replay_trace, stream_run
+from xaiforge.compat.fastapi import CORSMiddleware, FastAPI, HTTPException
+from xaiforge.compat.pydantic import BaseModel
+from xaiforge.compat.sse_starlette import EventSourceResponse
 from xaiforge.events import event_schema
+from xaiforge.observability.logging import LoggingConfig, configure_logging
+from xaiforge.observability.otel import configure_otel
 from xaiforge.tools.registry import build_registry
 from xaiforge.trace_store import TraceReader, list_manifests
-
 
 app = FastAPI(title="xAI-Forge API")
 app.add_middleware(
@@ -24,6 +24,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+if os.getenv("XAIFORGE_ENABLE_LOGGING") == "1":
+    configure_logging(LoggingConfig.from_env())
+if os.getenv("XAIFORGE_ENABLE_OTEL") == "1":
+    configure_otel()
+if os.getenv("XAIFORGE_ENABLE_HEALTH") == "1":
+
+    @app.get("/health")
+    async def health() -> dict:
+        return {
+            "status": "ok",
+            "providers": list(PROVIDERS.keys()),
+            "tools": len(build_registry().specs()),
+        }
 
 
 class RunRequest(BaseModel):
@@ -72,7 +85,7 @@ async def api_trace(trace_id: str) -> dict:
 
 
 @app.get("/api/traces/{trace_id}/events")
-async def api_trace_events(trace_id: str) -> list[Dict]:
+async def api_trace_events(trace_id: str) -> list[dict]:
     reader = TraceReader(Path(".xaiforge"), trace_id)
     events = []
     for line in reader.iter_events():
@@ -106,7 +119,7 @@ async def api_run(request: RunRequest) -> EventSourceResponse:
                 try:
                     payload = await asyncio.wait_for(queue.get(), timeout=0.1)
                     yield {"event": "message", "data": payload}
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     if task.done() and queue.empty():
                         break
         finally:
@@ -132,7 +145,7 @@ async def api_replay(trace_id: str) -> EventSourceResponse:
                 try:
                     payload = await asyncio.wait_for(queue.get(), timeout=0.1)
                     yield {"event": "message", "data": payload}
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     if task.done() and queue.empty():
                         break
         finally:

@@ -2,17 +2,31 @@ from __future__ import annotations
 
 import json
 
-import httpx
-from httpx import Response
-
+from xaiforge.compat import httpx
+from xaiforge.compat.httpx import Response
 from xaiforge_sdk.client import Client
 from xaiforge_sdk.sse import stream_sse
 
 
 def test_stream_sse_parses_events():
     payloads = [
-        {"type": "run_start", "trace_id": "t1", "ts": "now", "span_id": "s1", "task": "x", "provider": "heuristic", "root_dir": "."},
-        {"type": "run_end", "trace_id": "t1", "ts": "now", "span_id": "s2", "summary": "done", "status": "ok"},
+        {
+            "type": "run_start",
+            "trace_id": "t1",
+            "ts": "now",
+            "span_id": "s1",
+            "task": "x",
+            "provider": "heuristic",
+            "root_dir": ".",
+        },
+        {
+            "type": "run_end",
+            "trace_id": "t1",
+            "ts": "now",
+            "span_id": "s2",
+            "summary": "done",
+            "status": "ok",
+        },
     ]
     body = "\n".join([f"data: {json.dumps(item)}" for item in payloads])
 

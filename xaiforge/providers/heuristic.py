@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from xaiforge.events import Message, Plan, ToolCall, ToolError, ToolResult
 from xaiforge.providers.base import Provider
@@ -25,7 +25,7 @@ class HeuristicProvider(Provider):
         ]
         await emit(Plan(trace_id=context.trace_id, steps=plan_steps))
         task_lower = task.lower()
-        tool_results: Dict[str, Any] = {}
+        tool_results: dict[str, Any] = {}
         if re.search(r"\d+\s*[+\-*/^]\s*\d+", task_lower):
             expression = re.findall(r"[\d\s+\-*/^().]+", task)[0].strip()
             await emit(
@@ -97,11 +97,9 @@ class HeuristicProvider(Provider):
                         parent_span_id=tool_call.span_id,
                     )
                 )
-        final_lines: List[str] = ["Heuristic run complete."]
+        final_lines: list[str] = ["Heuristic run complete."]
         if "calc" in tool_results:
-            final_lines.append(
-                f"Computed result: {tool_results['calc']} (via calc tool)."
-            )
+            final_lines.append(f"Computed result: {tool_results['calc']} (via calc tool).")
         if "repo_grep" in tool_results:
             matches = tool_results["repo_grep"]
             final_lines.append(f"Found {len(matches)} matches in repo.")

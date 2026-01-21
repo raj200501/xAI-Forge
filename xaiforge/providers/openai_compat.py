@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any
 
-import httpx
-
+from xaiforge.compat import httpx
 from xaiforge.events import Message, ToolCall, ToolError, ToolResult
 from xaiforge.providers.base import Provider
 from xaiforge.tools.registry import ToolContext, ToolRegistry
@@ -54,10 +53,12 @@ class OpenAICompatibleProvider(Provider):
         }
         headers = {"Authorization": f"Bearer {api_key}"}
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(f"{base_url}/chat/completions", json=payload, headers=headers)
+            response = await client.post(
+                f"{base_url}/chat/completions", json=payload, headers=headers
+            )
             response.raise_for_status()
             data = response.json()
-        choices: List[Dict[str, Any]] = data.get("choices", [])
+        choices: list[dict[str, Any]] = data.get("choices", [])
         final_answer = ""
         for choice in choices:
             message = choice.get("message", {})

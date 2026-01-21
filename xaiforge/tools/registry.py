@@ -3,11 +3,12 @@ from __future__ import annotations
 import ast
 import math
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any
 
-import httpx
+from xaiforge.compat import httpx
 
 
 @dataclass
@@ -21,18 +22,18 @@ class ToolContext:
 class ToolSpec:
     name: str
     description: str
-    parameters: Dict[str, Any]
-    handler: Callable[[Dict[str, Any], ToolContext], Any]
+    parameters: dict[str, Any]
+    handler: Callable[[dict[str, Any], ToolContext], Any]
 
 
 class ToolRegistry:
     def __init__(self) -> None:
-        self._tools: Dict[str, ToolSpec] = {}
+        self._tools: dict[str, ToolSpec] = {}
 
     def register(self, spec: ToolSpec) -> None:
         self._tools[spec.name] = spec
 
-    def specs(self) -> List[ToolSpec]:
+    def specs(self) -> list[ToolSpec]:
         return list(self._tools.values())
 
     def get(self, name: str) -> ToolSpec:
@@ -91,7 +92,7 @@ class SafeEval(ast.NodeVisitor):
         raise ValueError("Only numeric constants allowed")
 
 
-def tool_calc(args: Dict[str, Any], _ctx: ToolContext) -> str:
+def tool_calc(args: dict[str, Any], _ctx: ToolContext) -> str:
     expression = str(args.get("expression", ""))
     tree = ast.parse(expression, mode="eval")
     evaluator = SafeEval()
@@ -101,7 +102,7 @@ def tool_calc(args: Dict[str, Any], _ctx: ToolContext) -> str:
     return str(value)
 
 
-def tool_regex_search(args: Dict[str, Any], _ctx: ToolContext) -> List[str]:
+def tool_regex_search(args: dict[str, Any], _ctx: ToolContext) -> list[str]:
     pattern = str(args.get("pattern", ""))
     text = str(args.get("text", ""))
     return re.findall(pattern, text)
@@ -115,7 +116,7 @@ def _ensure_within_root(path: Path, root: Path) -> Path:
     return resolved
 
 
-def tool_file_read(args: Dict[str, Any], ctx: ToolContext) -> str:
+def tool_file_read(args: dict[str, Any], ctx: ToolContext) -> str:
     path = Path(str(args.get("path", "")))
     max_bytes = int(args.get("max_bytes", 20000))
     target = _ensure_within_root(path if path.is_absolute() else ctx.root / path, ctx.root)
@@ -124,10 +125,10 @@ def tool_file_read(args: Dict[str, Any], ctx: ToolContext) -> str:
     return data.decode("utf-8", errors="replace")
 
 
-def tool_repo_grep(args: Dict[str, Any], ctx: ToolContext) -> List[Dict[str, Any]]:
+def tool_repo_grep(args: dict[str, Any], ctx: ToolContext) -> list[dict[str, Any]]:
     query = str(args.get("query", ""))
     globs = args.get("globs", ["**/*"])
-    results: List[Dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
     for pattern in globs:
         for path in ctx.root.glob(pattern):
             if path.is_dir():
@@ -150,7 +151,7 @@ def tool_repo_grep(args: Dict[str, Any], ctx: ToolContext) -> List[Dict[str, Any
     return results
 
 
-def tool_http_get(args: Dict[str, Any], ctx: ToolContext) -> str:
+def tool_http_get(args: dict[str, Any], ctx: ToolContext) -> str:
     if not ctx.allow_net:
         raise ValueError("Network access disabled (use --allow-net)")
     url = str(args.get("url", ""))

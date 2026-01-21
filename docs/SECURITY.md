@@ -32,3 +32,9 @@ default.
 - Run with a minimal root directory.
 - Keep `--allow-net` disabled unless necessary.
 - Use containers for untrusted tasks.
+
+## Policy guardrails (optional)
+
+xAI-Forge can enforce an explicit allow/deny policy for tool calls. When configured via
+`XAIFORGE_POLICY_FILE`, denied tools emit tool errors and are recorded in a policy report
+under `.xaiforge/policy/`.

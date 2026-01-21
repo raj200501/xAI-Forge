@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from xaiforge.compat.pydantic import BaseModel, Field
 
 EventType = Literal[
     "run_start",
@@ -31,7 +31,7 @@ class EventBase(BaseModel):
     ts: str
     type: EventType
     span_id: str
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
 
 
 class RunStart(EventBase):
@@ -55,7 +55,7 @@ class Message(EventBase):
 class ToolCall(EventBase):
     type: Literal["tool_call"] = "tool_call"
     tool_name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 class ToolResult(EventBase):
@@ -74,9 +74,9 @@ class RunEnd(EventBase):
     type: Literal["run_end"] = "run_end"
     status: Literal["ok", "error"] = "ok"
     summary: str
-    final_hash: Optional[str] = None
-    event_count: Optional[int] = None
-    integrity_ok: Optional[bool] = None
+    final_hash: str | None = None
+    event_count: int | None = None
+    integrity_ok: bool | None = None
 
 
 Event = RunStart | Plan | Message | ToolCall | ToolResult | ToolError | RunEnd
