@@ -1,0 +1,35 @@
+{
+  "description": "Demo policy: allow offline tools, block network access.",
+  "default_action": "allow",
+  "default_risk": "low",
+  "rules": [
+    {
+      "name": "allow-calc",
+      "action": "allow",
+      "tool": "calc",
+      "risk": "low",
+      "reason": "Deterministic arithmetic"
+    },
+    {
+      "name": "allow-repo-grep",
+      "action": "allow",
+      "tool": "repo_grep",
+      "risk": "low",
+      "reason": "Local search only"
+    },
+    {
+      "name": "allow-file-read",
+      "action": "monitor",
+      "tool": "file_read",
+      "risk": "medium",
+      "reason": "File reads should be reviewed"
+    },
+    {
+      "name": "deny-http",
+      "action": "deny",
+      "tool": "http_get",
+      "risk": "high",
+      "reason": "Network access disabled"
+    }
+  ]
+}

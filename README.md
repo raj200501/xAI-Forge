@@ -103,3 +103,48 @@ Read more in [docs/SECURITY.md](docs/SECURITY.md).
 ## License
 
 Apache-2.0
+
+## 60-second Quickstart
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+python -m xaiforge run --task "Solve 23*47 and show your steps"
+```
+
+## Demo
+
+Run the recruiter-ready demo (policy + metrics enabled):
+
+```bash
+./scripts/demo.sh
+```
+
+## Verification
+
+```bash
+./scripts/verify.sh
+```
+
+## Features
+
+- Deterministic trace store with Markdown/HTML/JSON exports.
+- Optional policy guardrails for tool calls (`XAIFORGE_POLICY_FILE`).
+- Optional structured logging + in-process metrics (`XAIFORGE_ENABLE_LOGGING=1`,
+  `XAIFORGE_ENABLE_METRICS=1`).
+- Bench reports under `.xaiforge/bench/latest.md` after each run.
+
+## Project structure
+
+- `xaiforge/` — runtime, providers, tools, plugins, observability, policy.
+- `xaiforge_sdk/` — typed Python SDK.
+- `web/` — React UI.
+- `scripts/` — verify, demo, doctor, and release utilities.
+- `tests/` — unit + integration tests.
+
+## Design decisions
+
+- Offline-first by default (network requires `--allow-net`).
+- Append-only JSONL event streams with rolling hashes for integrity.
+- Optional guardrails are opt-in to preserve existing defaults.

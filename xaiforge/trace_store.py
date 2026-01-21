@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List, Tuple
 
 from xaiforge.events import Event, RollingHasher
 
@@ -80,7 +80,7 @@ class TraceReader:
         return json.loads(self.manifest_path.read_text(encoding="utf-8"))
 
 
-def list_manifests(base_dir: Path) -> List[dict]:
+def list_manifests(base_dir: Path) -> list[dict]:
     trace_dir = base_dir / "traces"
     if not trace_dir.exists():
         return []
@@ -115,7 +115,7 @@ def _duration_seconds(started_at: str | None, ended_at: str | None) -> float | N
     return max(duration, 0.0)
 
 
-def _summarize_trace(trace_path: Path) -> Tuple[int, int]:
+def _summarize_trace(trace_path: Path) -> tuple[int, int]:
     if not trace_path.exists():
         return 0, 0
     tool_calls = 0

@@ -38,7 +38,9 @@ def test_metrics_collector_writes_file(tmp_path: Path) -> None:
         root=Path("."),
         started_at="now",
     )
-    plugin.on_run_start(context, RunStart(trace_id="t1", task="task", provider="heuristic", root_dir="."))
+    plugin.on_run_start(
+        context, RunStart(trace_id="t1", task="task", provider="heuristic", root_dir=".")
+    )
     plugin.on_event(context, ToolCall(trace_id="t1", tool_name="search", arguments={"q": "x"}))
     run_end = RunEnd(trace_id="t1", summary="done", status="ok")
     plugin.on_run_end(context, run_end)

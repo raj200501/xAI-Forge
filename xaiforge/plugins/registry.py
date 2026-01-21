@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from xaiforge.plugins.base import BasePlugin
 from xaiforge.plugins.metrics_collector import MetricsCollector
 from xaiforge.plugins.redactor import Redactor
-
 
 PLUGIN_FACTORIES = {
     "metrics_collector": MetricsCollector,

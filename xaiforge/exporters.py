@@ -99,7 +99,7 @@ def _render_html(manifest: dict[str, Any], events: list[dict[str, Any]]) -> str:
 <html lang=\"en\">
 <head>
   <meta charset=\"utf-8\" />
-  <title>xAI-Forge Trace {manifest.get('trace_id')}</title>
+  <title>xAI-Forge Trace {manifest.get("trace_id")}</title>
   <style>
     body {{ font-family: Arial, sans-serif; margin: 40px; background: #0b0f19; color: #e5e7eb; }}
     .card {{ background: #111827; padding: 24px; border-radius: 12px; margin-bottom: 16px; }}
@@ -109,17 +109,17 @@ def _render_html(manifest: dict[str, Any], events: list[dict[str, Any]]) -> str:
   </style>
 </head>
 <body>
-  <h1>Trace {manifest.get('trace_id')}</h1>
+  <h1>Trace {manifest.get("trace_id")}</h1>
   <div class=\"card\">
     <h2>Summary</h2>
     <table>
-      <tr><th>Task</th><td>{manifest.get('task')}</td></tr>
-      <tr><th>Provider</th><td>{manifest.get('provider')}</td></tr>
-      <tr><th>Status</th><td>{metrics.get('status')}</td></tr>
-      <tr><th>Events</th><td>{metrics.get('event_count')}</td></tr>
-      <tr><th>Tool calls</th><td>{metrics.get('tool_call_count')}</td></tr>
-      <tr><th>Errors</th><td>{metrics.get('error_count')}</td></tr>
-      <tr><th>Duration (s)</th><td>{metrics.get('duration_s')}</td></tr>
+      <tr><th>Task</th><td>{manifest.get("task")}</td></tr>
+      <tr><th>Provider</th><td>{manifest.get("provider")}</td></tr>
+      <tr><th>Status</th><td>{metrics.get("status")}</td></tr>
+      <tr><th>Events</th><td>{metrics.get("event_count")}</td></tr>
+      <tr><th>Tool calls</th><td>{metrics.get("tool_call_count")}</td></tr>
+      <tr><th>Errors</th><td>{metrics.get("error_count")}</td></tr>
+      <tr><th>Duration (s)</th><td>{metrics.get("duration_s")}</td></tr>
     </table>
   </div>
   <div class=\"card\">
@@ -168,10 +168,12 @@ def _tool_calls(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     calls = []
     for event in events:
         if event.get("type") == "tool_call":
-            calls.append({
-                "tool_name": event.get("tool_name"),
-                "arguments": event.get("arguments"),
-            })
+            calls.append(
+                {
+                    "tool_name": event.get("tool_name"),
+                    "arguments": event.get("arguments"),
+                }
+            )
     return calls
 
 
@@ -189,9 +191,11 @@ def _timeline(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     timeline = []
     for event in events:
         detail = event.get("summary") or event.get("content") or event.get("tool_name") or ""
-        timeline.append({
-            "ts": event.get("ts"),
-            "type": event.get("type"),
-            "detail": str(detail)[:120],
-        })
+        timeline.append(
+            {
+                "ts": event.get("ts"),
+                "type": event.get("type"),
+                "detail": str(detail)[:120],
+            }
+        )
     return timeline

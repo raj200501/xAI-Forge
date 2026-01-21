@@ -4,3 +4,4 @@ __pycache__/
 .xaiforge/
 node_modules/
 web/dist/
+codex_notes/

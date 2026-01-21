@@ -4,7 +4,7 @@ from pathlib import Path
 
 from xaiforge.events import RunEnd, RunStart, ToolCall
 from xaiforge.query import parse_query, query_traces
-from xaiforge.trace_store import TraceStore, TraceManifest
+from xaiforge.trace_store import TraceManifest, TraceStore
 
 
 def test_parse_query():

@@ -7,12 +7,9 @@ import time
 import webbrowser
 from pathlib import Path
 
-import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-
 from xaiforge.agent.runner import replay_trace, run_task
+from xaiforge.compat import typer
+from xaiforge.compat.rich import Console, Panel, Table
 from xaiforge.exporters import export_latest, export_trace
 from xaiforge.plugins.registry import available_plugins
 from xaiforge.query import query_traces
@@ -24,11 +21,11 @@ console = Console()
 
 @app.command()
 def run(
-    task: str = typer.Option(..., "--task", "-t"),
-    root: Path = typer.Option(Path("."), "--root"),
-    provider: str = typer.Option("heuristic", "--provider"),
-    allow_net: bool = typer.Option(False, "--allow-net"),
-    plugins: str = typer.Option("", "--plugins", help="Comma-separated plugin list"),
+    task: str = typer.Option(..., "--task", "-t"),  # noqa: B008
+    root: Path = typer.Option(Path("."), "--root"),  # noqa: B008
+    provider: str = typer.Option("heuristic", "--provider"),  # noqa: B008
+    allow_net: bool = typer.Option(False, "--allow-net"),  # noqa: B008
+    plugins: str = typer.Option("", "--plugins", help="Comma-separated plugin list"),  # noqa: B008
 ) -> None:
     """Run a task and stream events to the console."""
     console.rule("xAI-Forge run")
@@ -56,14 +53,18 @@ def run(
         while not runner.done() or not events.empty():
             try:
                 payload = await asyncio.wait_for(events.get(), timeout=0.1)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             event = json.loads(payload)
             console.print(f"[bold cyan]{event['type']}[/bold cyan] {event.get('ts')}")
         manifest = await runner
         console.print(
             Panel(
-                f"Trace: {manifest.trace_id}\nEvents: {manifest.event_count}\nHash: {manifest.final_hash}",
+                (
+                    f"Trace: {manifest.trace_id}\n"
+                    f"Events: {manifest.event_count}\n"
+                    f"Hash: {manifest.final_hash}"
+                ),
                 title="Run complete",
             )
         )
@@ -75,8 +76,8 @@ def run(
 
 @app.command()
 def serve(
-    host: str = typer.Option("127.0.0.1", "--host"),
-    port: int = typer.Option(8000, "--port"),
+    host: str = typer.Option("127.0.0.1", "--host"),  # noqa: B008
+    port: int = typer.Option(8000, "--port"),  # noqa: B008
 ) -> None:
     """Start the API server."""
     console.print(Panel(f"Serving on http://{host}:{port}", title="xAI-Forge"))
@@ -130,9 +131,9 @@ def traces() -> None:
 
 @app.command()
 def export(
-    trace_id: str = typer.Argument(..., help="Trace ID or 'latest'"),
-    format: str = typer.Option("markdown", "--format", "-f"),
-    output: Path | None = typer.Option(None, "--output", "-o"),
+    trace_id: str = typer.Argument(..., help="Trace ID or 'latest'"),  # noqa: B008
+    format: str = typer.Option("markdown", "--format", "-f"),  # noqa: B008
+    output: Path | None = typer.Option(None, "--output", "-o"),  # noqa: B008
 ) -> None:
     """Export a trace in markdown, html, or json format."""
     export_format = format.lower()
@@ -197,6 +198,39 @@ def ui(
             webbrowser.open(url, new=2)
         except Exception as exc:
             console.print(f"[yellow]Unable to open browser:[/yellow] {exc}")
+
+
+@app.command()
+def demo(
+    policy: Path | None = typer.Option(None, "--policy", help="Path to policy JSON"),  # noqa: B008
+) -> None:
+    """Run a local demo in a temporary directory."""
+    from xaiforge.demo import run_demo
+
+    console.rule("xAI-Forge demo")
+    result = run_demo(policy)
+    console.print(
+        Panel(
+            f"Trace: {result.trace_id}\n"
+            f"Events: {result.event_count}\n"
+            f"Export: {result.export_path}\n"
+            f"Bench: {result.bench_path}\n"
+            f"Query matches: {result.query_matches}",
+            title="Demo complete",
+        )
+    )
+
+
+@app.command()
+def policy_summary(
+    policy: Path = typer.Option(..., "--policy", help="Path to policy JSON"),  # noqa: B008
+) -> None:
+    """Summarize a policy file."""
+    from xaiforge.policy.cli import load_policy_config, render_policy_summary, summarize_policy
+
+    config = load_policy_config(policy)
+    summary = summarize_policy(config)
+    console.print(Panel(render_policy_summary(summary), title="Policy"))
 
 
 @app.command()

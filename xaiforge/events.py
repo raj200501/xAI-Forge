@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
-from typing import Any, Dict, Literal, Optional
+from datetime import UTC, datetime
+from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, TypeAdapter
+from xaiforge.compat.pydantic import BaseModel, Field, TypeAdapter
 
 EventType = Literal[
     "run_start",
@@ -19,7 +19,7 @@ EventType = Literal[
 
 
 def now_ts() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def new_id() -> str:
@@ -31,7 +31,7 @@ class EventBase(BaseModel):
     ts: str = Field(default_factory=now_ts)
     type: EventType
     span_id: str = Field(default_factory=new_id)
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
 
     def to_json(self) -> str:
         return self.model_dump_json()
@@ -58,7 +58,7 @@ class Message(EventBase):
 class ToolCall(EventBase):
     type: Literal["tool_call"] = "tool_call"
     tool_name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 class ToolResult(EventBase):
@@ -77,15 +77,15 @@ class RunEnd(EventBase):
     type: Literal["run_end"] = "run_end"
     status: Literal["ok", "error"] = "ok"
     summary: str
-    final_hash: Optional[str] = None
-    event_count: Optional[int] = None
-    integrity_ok: Optional[bool] = None
+    final_hash: str | None = None
+    event_count: int | None = None
+    integrity_ok: bool | None = None
 
 
 Event = RunStart | Plan | Message | ToolCall | ToolResult | ToolError | RunEnd
 
 
-def event_schema() -> Dict[str, Any]:
+def event_schema() -> dict[str, Any]:
     adapter = TypeAdapter(Event)
     return adapter.json_schema()
 

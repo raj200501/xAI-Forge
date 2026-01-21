@@ -42,3 +42,27 @@ Operators:
 - `=` exact match
 - `~` substring match
 - `AND` to combine conditions
+
+## Bench reports
+
+Every run writes a bench report under `.xaiforge/bench/` with a human-friendly summary
+of the plan, tool usage, and timing. The latest run is mirrored to `bench/latest.md`
+for quick review.
+
+## Policy guardrails
+
+Policy files define allow/deny/monitor rules for tool calls. Policies are optional and
+enabled by setting `XAIFORGE_POLICY_FILE` to a JSON policy file.
+
+```bash
+XAIFORGE_POLICY_FILE=examples/policy-demo.json python -m xaiforge run --task "Solve 2+2"
+```
+
+## Observability pack
+
+Optional structured logging and in-process metrics can be enabled via environment variables:
+
+```bash
+XAIFORGE_ENABLE_LOGGING=1 XAIFORGE_LOG_FORMAT=json \
+XAIFORGE_ENABLE_METRICS=1 python -m xaiforge run --task "Solve 2+2"
+```

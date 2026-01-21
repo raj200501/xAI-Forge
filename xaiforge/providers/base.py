@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from xaiforge.events import Event
-from xaiforge.tools.registry import ToolRegistry, ToolContext
+from xaiforge.tools.registry import ToolContext, ToolRegistry
 
 EmitFunc = Callable[[Event], Awaitable[None]]
 
