@@ -5,6 +5,12 @@ import CommandPalette from "../components/CommandPalette";
 import TracePage from "../pages/TracePage";
 import LiveRunPage from "../pages/LiveRunPage";
 import ComparePage from "../pages/ComparePage";
+import DashboardPage from "../pages/DashboardPage";
+import EvalsPage from "../pages/EvalsPage";
+import ExperimentsPage from "../pages/ExperimentsPage";
+import PerfPage from "../pages/PerfPage";
+import ProvidersPlaygroundPage from "../pages/ProvidersPlaygroundPage";
+import PoliciesPage from "../pages/PoliciesPage";
 import {
   fetchManifests,
   fetchProviders,
@@ -20,6 +26,12 @@ const routes = [
   { key: "traces", label: "Traces" },
   { key: "live", label: "Live Run" },
   { key: "compare", label: "Compare" },
+  { key: "dashboard", label: "Dashboard" },
+  { key: "experiments", label: "Experiments" },
+  { key: "evals", label: "Evals" },
+  { key: "perf", label: "Perf Lab" },
+  { key: "playground", label: "Playground" },
+  { key: "policies", label: "Policies" },
 ] as const;
 
 type RouteKey = (typeof routes)[number]["key"];
@@ -221,6 +233,12 @@ export default function App() {
             rightEvents={compareRightEvents}
           />
         )}
+        {route === "dashboard" && <DashboardPage />}
+        {route === "experiments" && <ExperimentsPage />}
+        {route === "evals" && <EvalsPage />}
+        {route === "perf" && <PerfPage />}
+        {route === "playground" && <ProvidersPlaygroundPage />}
+        {route === "policies" && <PoliciesPage />}
       </main>
     </div>
   );

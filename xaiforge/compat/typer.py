@@ -128,3 +128,33 @@ if _TYPER_SPEC is not None:
     Typer = _typer.Typer
     Option = _typer.Option
     Argument = _typer.Argument
+
+
+if not hasattr(Typer, "add_typer"):
+
+    def _add_typer(self, app: Typer, name: str) -> None:
+        if not hasattr(self, "_subapps"):
+            self._subapps = {}
+        self._subapps[name] = app
+
+    def _call(self) -> None:
+        argv = sys.argv[1:]
+        if not argv or argv[0] in {"-h", "--help"}:
+            self._print_help()
+            return
+        cmd_name = argv[0]
+        subapps = getattr(self, "_subapps", {})
+        if cmd_name in subapps:
+            original_argv = list(sys.argv)
+            sys.argv = [original_argv[0]] + argv[1:]
+            subapps[cmd_name]()
+            sys.argv = original_argv
+            return
+        func = self._commands.get(cmd_name)
+        if func is None:
+            raise SystemExit(f"Unknown command: {cmd_name}")
+        kwargs = _parse_kwargs(func, argv[1:])
+        func(**kwargs)
+
+    Typer.add_typer = _add_typer
+    Typer.__call__ = _call
