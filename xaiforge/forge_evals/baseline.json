@@ -1,0 +1,7 @@
+{
+  "dataset": "trace_ops",
+  "pass_rate": 1.0,
+  "total": 30,
+  "passed": 30,
+  "failed": 0
+}

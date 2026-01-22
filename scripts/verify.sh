@@ -41,3 +41,5 @@ SMOKE_DIR="$(mktemp -d)"
 trap 'rm -rf "$SMOKE_DIR"' EXIT
 $PYTHON_BIN -m xaiforge run --task "Solve 2+2" --root "$SMOKE_DIR" >/dev/null
 $PYTHON_BIN -m xaiforge export latest --format markdown >/dev/null
+$PYTHON_BIN -m xaiforge eval --dataset trace_ops --gate >/dev/null
+$PYTHON_BIN -m xaiforge replay_verify latest >/dev/null

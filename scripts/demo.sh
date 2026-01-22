@@ -24,3 +24,42 @@ print(f"Bench: {result.bench_path}")
 print(f"Query matches: {result.query_matches}")
 print(f"Events: {result.event_count}")
 PY
+
+$PYTHON_BIN - <<'PY'
+import json
+from pathlib import Path
+import uuid
+
+from xaiforge.forge_evals.runner import run_eval
+from xaiforge.forge_gateway import GatewayConfig, ModelGateway
+from xaiforge.forge_gateway.models import ModelMessage, ModelRequest
+from xaiforge.forge_trace import diff_traces, replay_summary, verify_trace
+
+demo_root = Path("reports/demo")
+demo_root.mkdir(parents=True, exist_ok=True)
+run_id = uuid.uuid4().hex[:8]
+
+gateway = ModelGateway(config=GatewayConfig())
+request = ModelRequest(messages=[ModelMessage(role="user", content="Demo run for gateway")])
+import asyncio
+result = asyncio.run(gateway.generate(request))
+(demo_root / f"gateway_{run_id}.json").write_text(result.response.to_json(), encoding="utf-8")
+
+dataset_path = Path("xaiforge/forge_evals/datasets/trace_ops.jsonl")
+report = run_eval(dataset_path, demo_root / "evals")
+
+trace_root = Path(".xaiforge")
+latest_manifest = sorted((trace_root / "traces").glob("*.manifest.json"), key=lambda p: p.stat().st_mtime)
+if len(latest_manifest) >= 2:
+    trace_a = latest_manifest[-1].stem.replace(".manifest", "")
+    trace_b = latest_manifest[-2].stem.replace(".manifest", "")
+    diff = diff_traces(trace_root, trace_b, trace_a)
+    (demo_root / f"diff_{run_id}.json").write_text(json.dumps(diff.to_json(), indent=2), encoding="utf-8")
+    (demo_root / f"diff_{run_id}.md").write_text(diff.to_markdown(), encoding="utf-8")
+    replay = verify_trace(trace_root, trace_a)
+    (demo_root / f"replay_{run_id}.json").write_text(json.dumps(replay_summary(replay), indent=2), encoding="utf-8")
+
+print("DEMO PASSED")
+print(f"Gateway response saved under {demo_root}")
+print(f"Eval pass rate: {report.pass_rate:.2%}")
+PY

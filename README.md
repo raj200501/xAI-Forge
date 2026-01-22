@@ -11,6 +11,9 @@ that keeps everything auditable.
 > Why xAI-Forge exists: teams need a way to capture, replay, and explain agent behavior without
 > relying on paid services. xAI-Forge makes trace integrity a first-class feature.
 
+**Disclaimer:** This is an independent project inspired by frontier AI tooling needs and is not
+affiliated with or endorsed by xAI (the company).
+
 ![xAI-Forge header](assets/brand-header.svg)
 
 
@@ -126,6 +129,13 @@ Run the recruiter-ready demo (policy + metrics enabled):
 ```bash
 ./scripts/verify.sh
 ```
+
+## What's new
+
+- Forge Model Gateway: provider-agnostic requests, streaming, batching, and retry controls.
+- Forge Evals + Regression: JSONL datasets, scorers, and CI gate for score drift.
+- Forge Safety Layer: PII + secret scrubbing with policy enforcement.
+- Trace Replay + Diff: deterministic verification and run-to-run drift reports.
 
 ## Features
 
