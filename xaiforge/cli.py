@@ -201,6 +201,87 @@ def ui(
 
 
 @app.command()
+def gateway_test(
+    stream: bool = typer.Option(False, "--stream"),  # noqa: B008
+    batch: bool = typer.Option(False, "--batch"),  # noqa: B008
+) -> None:
+    """Exercise the Forge Model Gateway with mock provider."""
+    from xaiforge.forge_gateway import GatewayConfig, ModelGateway
+    from xaiforge.forge_gateway.models import ModelMessage, ModelRequest
+
+    config = GatewayConfig()
+    config.batch.enabled = batch
+    gateway = ModelGateway(config=config)
+    request = ModelRequest(messages=[ModelMessage(role="user", content="gateway test")])
+    if stream:
+
+        async def _run() -> None:
+            async for event in gateway.stream(request):
+                console.print(f"[cyan]{event.chunk.text}[/cyan]", end="")
+            console.print()
+
+        import asyncio
+
+        asyncio.run(_run())
+    else:
+        import asyncio
+
+        result = asyncio.run(gateway.generate(request))
+        console.print(Panel(result.response.to_json(), title="Gateway response"))
+
+
+@app.command()
+def eval(
+    dataset: str = typer.Option("trace_ops", "--dataset"),  # noqa: B008
+    gate: bool = typer.Option(False, "--gate"),  # noqa: B008
+) -> None:
+    """Run Forge evals and optionally enforce regression gates."""
+    from xaiforge.forge_evals.runner import gate_report, run_eval
+
+    dataset_path = Path("xaiforge/forge_evals/datasets") / f"{dataset}.jsonl"
+    report_dir = Path("reports/evals")
+    report = run_eval(dataset_path, report_dir)
+    console.print(Panel(f"Pass rate: {report.pass_rate:.2%}", title="Evals"))
+    if gate:
+        baseline_path = Path("xaiforge/forge_evals/baseline.json")
+        gate_report(report, baseline_path)
+        console.print(Panel("Eval gate passed", title="Evals"))
+
+
+@app.command()
+def replay_verify(trace_id: str = typer.Argument(...)) -> None:
+    """Verify trace integrity and emit a summary report."""
+    from xaiforge.forge_trace import replay_summary, verify_trace
+
+    result = verify_trace(Path(".xaiforge"), trace_id)
+    console.print(Panel(json.dumps(replay_summary(result), indent=2), title="Replay verify"))
+
+
+@app.command()
+def diff(
+    trace_a: str = typer.Argument(...),  # noqa: B008
+    trace_b: str = typer.Argument(...),  # noqa: B008
+) -> None:
+    """Diff two traces and output a summary."""
+    from xaiforge.forge_trace import diff_traces
+
+    diff_result = diff_traces(Path(".xaiforge"), trace_a, trace_b)
+    output_dir = Path("reports/trace-diff")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / f"{trace_a}_vs_{trace_b}.json"
+    json_path.write_text(json.dumps(diff_result.to_json(), indent=2), encoding="utf-8")
+    md_path = output_dir / f"{trace_a}_vs_{trace_b}.md"
+    md_path.write_text(diff_result.to_markdown(), encoding="utf-8")
+    console.print(Panel(f"Diff saved to {json_path}", title="Trace diff"))
+
+
+@app.command("replay_verify")
+def replay_verify_compat(trace_id: str = typer.Argument(...)) -> None:
+    """Compatibility command for replay_verify."""
+    replay_verify(trace_id)
+
+
+@app.command()
 def demo(
     policy: Path | None = typer.Option(None, "--policy", help="Path to policy JSON"),  # noqa: B008
 ) -> None:
