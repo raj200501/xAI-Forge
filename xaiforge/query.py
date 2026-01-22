@@ -58,6 +58,16 @@ def query_traces(base_dir: Path, expression: str) -> dict[str, int]:
     return results
 
 
+def query_traces_fast(base_dir: Path, expression: str) -> dict[str, int]:
+    """Query traces using the SQLite index when available."""
+    index_path = base_dir / "index.sqlite"
+    if index_path.exists():
+        from xaiforge.forge_index.query import fast_query
+
+        return fast_query(base_dir, expression)
+    return query_traces(base_dir, expression)
+
+
 def _matches(event: dict, manifest: dict, conditions: Iterable[Condition]) -> bool:
     for condition in conditions:
         value = _get_field(event, manifest, condition.field)

@@ -63,3 +63,40 @@ print("DEMO PASSED")
 print(f"Gateway response saved under {demo_root}")
 print(f"Eval pass rate: {report.pass_rate:.2%}")
 PY
+
+$PYTHON_BIN - <<'PY'
+import json
+from pathlib import Path
+import uuid
+
+from xaiforge.forge_experiments.models import ExperimentConfig, ExperimentRequestTemplate
+from xaiforge.forge_experiments.runner import run_experiment, save_experiment_artifacts
+from xaiforge.forge_gateway.models import ModelMessage
+from xaiforge.forge_index.builder import build_index
+from xaiforge.forge_perf.runner import run_bench
+
+demo_root = Path("reports/demo")
+demo_root.mkdir(parents=True, exist_ok=True)
+run_id = uuid.uuid4().hex[:8]
+
+config = ExperimentConfig.create(
+    experiment_id=f"demo_exp_{run_id}",
+    mode="ab",
+    providers=["mock", "mock"],
+    request_template=ExperimentRequestTemplate(messages=[ModelMessage(role="user", content="demo")]),
+)
+result = run_experiment(config)
+manifest = save_experiment_artifacts(config, result)
+(demo_root / f"experiment_{run_id}.json").write_text(json.dumps(manifest.to_dict(), indent=2), encoding="utf-8")
+
+bench = run_bench(suite="quick", provider="mock")
+(demo_root / f"perf_{run_id}.json").write_text(json.dumps(bench.to_dict(), indent=2), encoding="utf-8")
+
+stats = build_index(Path(".xaiforge"))
+(demo_root / f"index_{run_id}.json").write_text(json.dumps(stats.to_dict(), indent=2), encoding="utf-8")
+
+print("DEMO ARTIFACTS UPDATED")
+print(f"Experiment manifest: {manifest.experiment_id}")
+print(f"Perf run: {bench.run_id}")
+print(f"Index stats: {stats.trace_count} traces")
+PY

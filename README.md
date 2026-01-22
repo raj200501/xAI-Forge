@@ -13,6 +13,7 @@ that keeps everything auditable.
 
 **Disclaimer:** This is an independent project inspired by frontier AI tooling needs and is not
 affiliated with or endorsed by xAI (the company).
+**Disclaimer:** The project name is aspirational and does not indicate any official tooling.
 
 ![xAI-Forge header](assets/brand-header.svg)
 

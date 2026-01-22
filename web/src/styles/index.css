@@ -506,3 +506,144 @@ nav button.active {
     grid-template-columns: 1fr;
   }
 }
+
+.workbench-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workbench-header h2 {
+  margin: 0;
+}
+
+.workbench-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.workbench-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.workbench-card strong {
+  font-size: 20px;
+}
+
+.workbench-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.workbench-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.workbench-table th,
+.workbench-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+
+.signal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.signal-list button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.signal-list button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.code-block {
+  background: #0b0f16;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  max-height: 320px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+.sparkline {
+  width: 100%;
+  height: 80px;
+  color: var(--accent);
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.form-grid textarea,
+.form-grid select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.workbench-output {
+  display: grid;
+  gap: 8px;
+}
+
+.comparison-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.comparison-metrics {
+  display: flex;
+  gap: 16px;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}

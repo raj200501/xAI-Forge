@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# ruff: noqa: I001
+
 import json
 import shutil
 import sys
@@ -14,6 +16,9 @@ from xaiforge.exporters import export_latest, export_trace
 from xaiforge.plugins.registry import available_plugins
 from xaiforge.query import query_traces
 from xaiforge.trace_store import TraceManifest, TraceReader, list_manifests
+from xaiforge.forge_experiments.cli import experiment_app
+from xaiforge.forge_perf.cli import perf_app
+from xaiforge.forge_index.cli import index_app
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -149,6 +154,20 @@ def query(expr: str = typer.Argument(..., help="Query expression")) -> None:
     """Search events across traces with a minimal DSL."""
     results = query_traces(Path(".xaiforge"), expr)
     table = Table(title=f"Query: {expr}")
+    table.add_column("Trace ID")
+    table.add_column("Matches")
+    for trace_id, count in sorted(results.items(), key=lambda item: item[1], reverse=True):
+        table.add_row(trace_id, str(count))
+    console.print(table)
+
+
+@app.command("query-fast")
+def query_fast(expr: str = typer.Argument(..., help="Query expression")) -> None:
+    """Search events using the fast index backend."""
+    from xaiforge.forge_index.query import fast_query
+
+    results = fast_query(Path(".xaiforge"), expr)
+    table = Table(title=f"Fast Query: {expr}")
     table.add_column("Trace ID")
     table.add_column("Matches")
     for trace_id, count in sorted(results.items(), key=lambda item: item[1], reverse=True):
@@ -402,6 +421,11 @@ def _parse_plugins(value: str) -> list[str]:
             f"Unknown plugins: {', '.join(unknown)}. Available: {', '.join(available_plugins())}"
         )
     return plugins
+
+
+app.add_typer(experiment_app, name="experiment")
+app.add_typer(perf_app, name="perf")
+app.add_typer(index_app, name="index")
 
 
 if __name__ == "__main__":

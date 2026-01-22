@@ -103,3 +103,52 @@ export async function streamEvents(
     }
   }
 }
+
+export async function fetchExperiments(): Promise<Record<string, unknown>[]> {
+  const res = await fetch("/api/experiments");
+  if (!res.ok) throw new Error("Failed to fetch experiments");
+  return res.json();
+}
+
+export async function fetchExperimentReport(name: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`/api/experiments/${name}`);
+  if (!res.ok) throw new Error("Failed to fetch experiment");
+  return res.json();
+}
+
+export async function fetchReportList(kind: "evals" | "perf" | "experiments"): Promise<string[]> {
+  const res = await fetch(`/api/reports/${kind}`);
+  if (!res.ok) throw new Error("Failed to fetch reports");
+  return res.json();
+}
+
+export async function fetchReport(kind: "evals" | "perf" | "experiments", name: string): Promise<any> {
+  const res = await fetch(`/api/reports/${kind}/${name}`);
+  if (!res.ok) throw new Error("Failed to fetch report");
+  return res.json();
+}
+
+export async function fetchPlugins(): Promise<string[]> {
+  const res = await fetch("/api/plugins");
+  if (!res.ok) throw new Error("Failed to fetch plugins");
+  return res.json();
+}
+
+export async function fetchPolicySummary(): Promise<Record<string, unknown>> {
+  const res = await fetch("/api/policy/summary");
+  if (!res.ok) throw new Error("Failed to fetch policy summary");
+  return res.json();
+}
+
+export async function runGateway(payload: {
+  provider: string;
+  messages: { role: string; content: string }[];
+}): Promise<Record<string, unknown>> {
+  const res = await fetch("/api/gateway/run", {
+    method: "POST",
+    headers: jsonHeaders,
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to run gateway");
+  return res.json();
+}
